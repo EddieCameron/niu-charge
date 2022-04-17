@@ -49,7 +49,6 @@ plug.on("connected", async () => {
 		io.emit("plug", data);
 	});
 });
-plug.connect();
 
 plug.on("data", (data) => {
 	if (!interval.state && data.state) {
@@ -75,6 +74,9 @@ io.on("connection", function (socket) {
 		io.emit("plug", plug.get());
 	});
 });
+
+plug.connect();
+history.start(account.getScooter().soc, plug.get().power);
 
 function sendData() {
 	io.emit("data", {
