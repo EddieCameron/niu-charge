@@ -7,7 +7,8 @@ module.exports = class Limit {
 	}
 
 	async load() {
-		this._limit = await storage.get('limit');
+		await storage.init();
+		this._limit = await storage.getItem('limit');
 
 		if (isNaN(this._limit)) {
 			this.set(90);
@@ -20,6 +21,6 @@ module.exports = class Limit {
 
 	async set(newLimit) {
 		this._limit = parseInt(newLimit);
-		await storage.set('limit', parseInt(newLimit));
+		await storage.setItem('limit', parseInt(newLimit));
 	}
 }

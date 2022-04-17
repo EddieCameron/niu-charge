@@ -44,13 +44,12 @@ var plug = new Plug(config.get("plug"));
 var limit = new Limit();
 limit.load();
 
-plug.connect();
-
 plug.on("connected", async () => {
 	plug.update().then((data) => {
 		io.emit("plug", data);
 	});
 });
+plug.connect();
 
 plug.on("data", (data) => {
 	if (!interval.state && data.state) {
@@ -94,6 +93,15 @@ function setIdleInterval() {
 	clearInterval(interval.id);
 	interval.state = 0;
 	interval.id = setInterval(async () => {
+		await plug.update();
+		if (!plug.get().state) {
+			if (isInPowerTime()) {
+				// free power!, switch on
+				console.log("Starting charge - free power!");
+				plug.set(true);
+			}
+		}
+
 		await account.updateScooter();
 		sendData();
 
@@ -113,23 +121,31 @@ function setChargingInterval() {
 	let first = true;
 	interval.id = setInterval(
 		(async () => {
+			await plug.update();
 			await account.updateScooter();
 			sendData();
 
 			console.log("Checking SOC", account.getScooter().soc, "%", first);
 
 			if (plug.get().state) {
-				let lim = await limit.get();
-				if (account.getScooter().soc > lim && lim < 100) {
-					console.log("Stopping charge");
+				if (!isInPowerTime()) {
+					// not free power anymore, switch off
+					console.log("Stopping charge - not free power");
 					plug.set(false);
-				} else {
-					if (first || history.get().length == 0) {
-						first = false;
-						history.start(account.getScooter().soc, plug.get().power);
-						io.emit("start", true);
+				}
+				else {
+					let lim = await limit.get();
+					if (account.getScooter().soc > lim && lim < 100) {
+						console.log("Stopping charge - limit reached");
+						plug.set(false);
 					} else {
-						history.update(account.getScooter().soc, plug.get().power);
+						if (first || history.get().length == 0) {
+							first = false;
+							history.start(account.getScooter().soc, plug.get().power);
+							io.emit("start", true);
+						} else {
+							history.update(account.getScooter().soc, plug.get().power);
+						}
 					}
 				}
 			} else if (!account.getScooter().isCharging) {
@@ -146,6 +162,11 @@ function checkLogged(req, res, next) {
 	} else {
 		res.redirect("/login");
 	}
+}
+
+function isInPowerTime() {
+	var hour = new Date().getHours();
+	return hour >= 21;	// free 9pm to midnight
 }
 
 app.use(express.static("public"));
