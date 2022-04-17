@@ -76,7 +76,6 @@ io.on("connection", function (socket) {
 });
 
 plug.connect();
-history.start(account.getScooter().soc, plug.get().power);
 
 function sendData() {
 	io.emit("data", {
@@ -125,6 +124,15 @@ function setChargingInterval() {
 		(async () => {
 			await plug.update();
 			await account.updateScooter();
+
+			if (first || history.get().length == 0) {
+				first = false;
+				history.start(account.getScooter().soc, plug.get().power);
+				io.emit("start", true);
+			} else {
+				history.update(account.getScooter().soc, plug.get().power);
+			}
+
 			sendData();
 
 			console.log("Checking SOC", account.getScooter().soc, "%", first);
@@ -140,14 +148,6 @@ function setChargingInterval() {
 					if (account.getScooter().soc > lim && lim < 100) {
 						console.log("Stopping charge - limit reached");
 						plug.set(false);
-					} else {
-						if (first || history.get().length == 0) {
-							first = false;
-							history.start(account.getScooter().soc, plug.get().power);
-							io.emit("start", true);
-						} else {
-							history.update(account.getScooter().soc, plug.get().power);
-						}
 					}
 				}
 			} else if (!account.getScooter().isCharging) {
