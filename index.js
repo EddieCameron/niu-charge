@@ -85,6 +85,16 @@ function sendData() {
 	});
 }
 
+function isInPowerTime() {
+	var hour = new Date().getHours();
+	return hour >= 21;	// free 9pm to midnight
+}
+
+async function isUnderChargeLimit() {
+	let lim = await limit.get();
+	return account.getScooter().soc < lim;
+}
+
 setChargingInterval();
 
 // Update every 30 minutes until the charge begins
@@ -95,20 +105,15 @@ function setIdleInterval() {
 	interval.state = 0;
 	interval.id = setInterval(async () => {
 		await plug.update();
-		if (!plug.get().state) {
-			if (isInPowerTime()) {
-				// free power!, switch on
-				console.log("Starting charge - free power!");
-				plug.set(true);
-			}
-		}
-
 		await account.updateScooter();
 		sendData();
 
-		if (account.getScooter().isCharging) {
-			console.log("NIU is charging, decreasing interval");
+		var canCharge = await isUnderChargeLimit();
 
+		if (isInPowerTime() && canCharge) {
+			// free power!, switch on
+			console.log("Starting charge - free power!");
+			plug.set(true);
 			setChargingInterval();
 		}
 	}, 300000); //30min
@@ -137,20 +142,18 @@ function setChargingInterval() {
 
 			console.log("Checking SOC", account.getScooter().soc, "%", first);
 
-			if (plug.get().state) {
-				if (!isInPowerTime()) {
-					// not free power anymore, switch off
-					console.log("Stopping charge - not free power");
-					plug.set(false);
-				}
-				else {
-					let lim = await limit.get();
-					if (account.getScooter().soc > lim && lim < 100) {
-						console.log("Stopping charge - limit reached");
-						plug.set(false);
-					}
-				}
-			} else if (!account.getScooter().isCharging) {
+			var canCharge = await isUnderChargeLimit();
+
+			if (isInPowerTime() && canCharge) {
+				// free power!, switch on
+				console.log("Starting charge - free power!");
+				plug.set(true);
+			}
+			else {
+				// shouldn't charge! switch off
+				console.log("Stopping charge - not free power");
+				plug.set(false);
+
 				setIdleInterval();
 			}
 		}).bind(first),
@@ -164,11 +167,6 @@ function checkLogged(req, res, next) {
 	} else {
 		res.redirect("/login");
 	}
-}
-
-function isInPowerTime() {
-	var hour = new Date().getHours();
-	return hour >= 21;	// free 9pm to midnight
 }
 
 app.use(express.static("public"));
