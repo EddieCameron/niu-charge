@@ -102,12 +102,12 @@ function isInPowerTime() {
 async function isUnderChargeLimit() {
 	try {
 		let lim = await limit.get();
+
+		return account.getScooter().soc < lim;
 	} catch (err) {
 		console.error(err);
 		return true;
 	}
-
-	return account.getScooter().soc < lim;
 }
 
 setChargingInterval();
