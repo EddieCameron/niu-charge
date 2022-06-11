@@ -74,7 +74,7 @@ io.on("connection", function (socket) {
 	});
 
 	socket.on("plug", async (msg) => {
-		[err] = to(await plug.set(msg));
+		[err] = await to(plug.set(msg));
 		if (err) {
 			console.error(err);
 			return;
@@ -100,7 +100,7 @@ function isInPowerTime() {
 }
 
 async function isUnderChargeLimit() {
-	let [err, lim] = to(await limit.get());
+	let [err, lim] = await to(limit.get());
 	if (err) {
 		console.error(err);
 		return true;
@@ -117,12 +117,12 @@ function setIdleInterval() {
 	clearInterval(interval.id);
 	interval.state = 0;
 	interval.id = setInterval(async () => {
-		[err] = to(await plug.update());
+		[err] = await to(plug.update());
 		if (err) {
 			console.error(err);
 			return;
 		}
-		[err] = to(await account.updateScooter());
+		[err] = await to(account.updateScooter());
 		if (err) {
 			console.error(err);
 			return;
@@ -148,12 +148,12 @@ function setChargingInterval() {
 	let first = true;
 	interval.id = setInterval(
 		(async () => {
-			[err] = to(await plug.update());
+			[err] = await to(plug.update());
 			if (err) {
 				console.error(err);
 				return;
 			}
-			[err] = to(await account.updateScooter());
+			[err] = await to(account.updateScooter());
 			if (err) {
 				console.error(err);
 				return;
