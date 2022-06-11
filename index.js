@@ -29,7 +29,7 @@ if (fs.existsSync(TOKEN_NAME)) {
 	};
 
 	if (token != "") {
-		accountConfig.token = token.toString();
+		accountConfig.token = token.toString().trim();
 	}
 
 	if (config.has("lang")) {
