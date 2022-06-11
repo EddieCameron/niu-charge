@@ -108,7 +108,7 @@ async function isUnderChargeLimit() {
 	return account.getScooter().soc < lim;
 }
 
-//setChargingInterval();
+setChargingInterval();
 
 // Update every 30 minutes until the charge begins
 function setIdleInterval() {
