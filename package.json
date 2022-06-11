@@ -4,6 +4,7 @@
   "description": "Charging manager for NIU electric mopeds",
   "main": "niucharge.js",
   "dependencies": {
+    "await-to-js": "^3.0.0",
     "axios": "^0.26.1",
     "config": "^3.3.1",
     "csv-writer": "^1.6.0",

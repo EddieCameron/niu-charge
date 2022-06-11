@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const config = require("config");
 const express = require("express");
 const fs = require("fs");
+const to = require('await-to-js').default;
 
 const TOKEN_NAME = "config/token";
 
@@ -64,12 +65,20 @@ io.on("connection", function (socket) {
 	});
 
 	socket.on("limit", async (msg) => {
-		await limit.set(msg);
+		[err] = await to(limit.set(msg));
+		if (err) {
+			console.error(err);
+			return;
+		}
 		io.emit("limit", msg);
 	});
 
 	socket.on("plug", async (msg) => {
-		await plug.set(msg);
+		[err] = to(await plug.set(msg));
+		if (err) {
+			console.error(err);
+			return;
+		}
 
 		io.emit("plug", plug.get());
 	});
@@ -91,7 +100,11 @@ function isInPowerTime() {
 }
 
 async function isUnderChargeLimit() {
-	let lim = await limit.get();
+	let [err, lim] = to(await limit.get());
+	if (err) {
+		console.error(err);
+		return true;
+	}
 	return account.getScooter().soc < lim;
 }
 
@@ -104,8 +117,16 @@ function setIdleInterval() {
 	clearInterval(interval.id);
 	interval.state = 0;
 	interval.id = setInterval(async () => {
-		await plug.update();
-		await account.updateScooter();
+		[err] = to(await plug.update());
+		if (err) {
+			console.error(err);
+			return;
+		}
+		[err] = to(await account.updateScooter());
+		if (err) {
+			console.error(err);
+			return;
+		}
 		sendData();
 
 		var canCharge = await isUnderChargeLimit();
@@ -127,8 +148,16 @@ function setChargingInterval() {
 	let first = true;
 	interval.id = setInterval(
 		(async () => {
-			await plug.update();
-			await account.updateScooter();
+			[err] = to(await plug.update());
+			if (err) {
+				console.error(err);
+				return;
+			}
+			[err] = to(await account.updateScooter());
+			if (err) {
+				console.error(err);
+				return;
+			}
 
 			if (first || history.get().length == 0) {
 				first = false;
