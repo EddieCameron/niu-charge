@@ -100,11 +100,13 @@ function isInPowerTime() {
 }
 
 async function isUnderChargeLimit() {
-	let [err, lim] = await to(limit.get());
-	if (err) {
+	try {
+		let lim = await limit.get();
+	} catch (err) {
 		console.error(err);
 		return true;
 	}
+
 	return account.getScooter().soc < lim;
 }
 
