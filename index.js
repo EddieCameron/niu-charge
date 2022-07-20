@@ -139,7 +139,7 @@ function setIdleInterval() {
 			plug.set(true);
 			setChargingInterval();
 		}
-	}, 300000); //30min
+	}, 30 * 60 * 1000); //30min
 }
 
 function setChargingInterval() {
@@ -187,7 +187,7 @@ function setChargingInterval() {
 				setIdleInterval();
 			}
 		}).bind(first),
-		10000
+		10 * 60 * 1000 //10min
 	);
 }
 
