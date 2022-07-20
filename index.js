@@ -150,25 +150,29 @@ function setChargingInterval() {
 	let first = true;
 	interval.id = setInterval(
 		(async () => {
-			[err] = await to(plug.update());
-			if (err) {
-				console.error(err);
-				return;
-			}
-			[err] = await to(account.updateScooter());
-			if (err) {
-				console.error(err);
-				return;
-			}
+			try {
+				[err] = await to(plug.update());
+				if (err) {
+					console.error(err);
+					return;
+				}
+				[err] = await to(account.updateScooter());
+				if (err) {
+					console.error(err);
+					return;
+				}
 
-			if (first || history.get().length == 0) {
-				first = false;
-				history.start(account.getScooter().soc, plug.get().power);
-				io.emit("start", true);
-			} else {
-				history.update(account.getScooter().soc, plug.get().power);
+				if (first || history.get().length == 0) {
+					first = false;
+					history.start(account.getScooter().soc, plug.get().power);
+					io.emit("start", true);
+				} else {
+					history.update(account.getScooter().soc, plug.get().power);
+				}
 			}
-
+			catch (err) {
+				console.error(err);
+			}
 			sendData();
 
 			console.log("Checking SOC", account.getScooter().soc, "%", first);
@@ -266,6 +270,11 @@ app.post("/charging", (req, res) => {
 			res.statusCode = 500;
 			res.send();
 		});
+});
+
+process.on('unhandledRejection', (reason, p) => {
+	console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
+	// application specific logging, throwing an error, or other logic here
 });
 
 http.listen(process.env.PORT || 3000, () => {
