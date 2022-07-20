@@ -93,6 +93,7 @@ module.exports = class Account {
 			};
 
 			// Set up the request
+			console.log(post_options);
 			var post_req = https.request(post_options, (res) => {
 				res.setEncoding("utf8");
 				res.on("data", function (chunk) {

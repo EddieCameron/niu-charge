@@ -150,28 +150,23 @@ function setChargingInterval() {
 	let first = true;
 	interval.id = setInterval(
 		(async () => {
-			try {
-				[err] = await to(plug.update());
-				if (err) {
-					console.error(err);
-					return;
-				}
-				[err] = await to(account.updateScooter());
-				if (err) {
-					console.error(err);
-					return;
-				}
-
-				if (first || history.get().length == 0) {
-					first = false;
-					history.start(account.getScooter().soc, plug.get().power);
-					io.emit("start", true);
-				} else {
-					history.update(account.getScooter().soc, plug.get().power);
-				}
-			}
-			catch (err) {
+			[err] = await to(plug.update());
+			if (err) {
 				console.error(err);
+				return;
+			}
+			[err] = await to(account.updateScooter());
+			if (err) {
+				console.error(err);
+				return;
+			}
+
+			if (first || history.get().length == 0) {
+				first = false;
+				history.start(account.getScooter().soc, plug.get().power);
+				io.emit("start", true);
+			} else {
+				history.update(account.getScooter().soc, plug.get().power);
 			}
 			sendData();
 
