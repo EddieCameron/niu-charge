@@ -19,4 +19,5 @@ const args = process.argv.slice(2);
 account.login(args[0], args[1]).then((token) => {
     console.log(token);
     fs.writeFileSync(TOKEN_NAME, token);
-});
+})
+    .catch(error => console.error(error));
