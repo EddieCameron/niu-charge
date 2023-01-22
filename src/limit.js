@@ -33,7 +33,7 @@ module.exports = class Limit {
 		return this._limitMin;
 	}
 
-	async set(newLimitMin) {
+	async setMin(newLimitMin) {
 		this._limitMin = parseInt(newLimitMin);
 		await storage.setItem('limitMin', parseInt(newLimitMin));
 	}
