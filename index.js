@@ -272,6 +272,6 @@ process.on('unhandledRejection', (reason, p) => {
 	// application specific logging, throwing an error, or other logic here
 });
 
-http.listen(process.env.PORT || 3000, () => {
+http.listen(process.env.PORT || config.get("port"), () => {
 	console.log("NIU Charge started!");
 });
