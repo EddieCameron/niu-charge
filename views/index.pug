@@ -81,8 +81,11 @@ html(lang='en')
               div.bg-light.range-90
               div.bg-light.range-95
               input#limitSlider.form-control-range(type='range', min='50', max='100', value='0' list='ticks')
+              input#limitSliderMin.form-control-range(type='range', min='5', max='80', value='0' list='ticks')
 
-          .display-4#limitValue --
+          .d-flex.justify-content-around
+            .display-4#limitMinValue --
+            .display-4#limitValue --
           h4 Charge Limit
 
           //if data.isCharging && plugData.state!=-1
@@ -124,6 +127,10 @@ html(lang='en')
         socket.emit("limit", this.value);
       });
 
+      $('#limitSliderMin').on('input', function() {
+        socket.emit("limitMin", this.value);
+      });
+
       socket.on('reconnect', function () {
         socket.emit('ready');
       });
@@ -133,6 +140,11 @@ html(lang='en')
         setLimit();
       });
 
+      socket.on('limitMin',function(msg){
+        data.limitMin = msg;
+        setLimitMin();
+      });
+
       socket.on('data', function(msg){
         if(msg.scooter instanceof Object){
           data = msg;
@@ -140,6 +152,7 @@ html(lang='en')
 
           setSOC();
           setLimit();
+          setLimitMin();
           $('#mileageValue').html(data.scooter.estimatedMileage);
 
           if(data.scooter.isCharging){
@@ -252,6 +265,9 @@ html(lang='en')
       }
 
       function setLimit(){
+        if ( data.limit < data.limitMin )
+          data.limit = data.limitMin 
+
         if (data.limit == 100){
           $('#limitValue').html("Disabled");
           
@@ -265,6 +281,16 @@ html(lang='en')
 
         setTime();
         setLimitVisual();
+      }
+
+      function setLimitMin(){
+        if ( data.limitMin > data.limit )
+          data.limitMin = data.limit 
+
+        $('#limitMinValue').html(data.limitMin);
+        $('#limitMinValue').append('<small>%</small>')
+
+        $('#limitSliderMin').val(data.limitMin);
       }
 
       function setLimitVisual(){

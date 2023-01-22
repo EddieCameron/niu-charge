@@ -1,1 +1,11 @@
-{}
+{
+    "plug": {
+        "address": "http://192.168.1.2/"
+    },
+    "scooter": "M1P0000R0000000",
+    "lang": "en-US",
+    "port": 3000,
+    "useAllowedChargeTime": false,
+    "startAllowedChargeTime": 21,
+    "endAllowedChargeTime": 24
+}

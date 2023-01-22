@@ -73,6 +73,15 @@ io.on("connection", function (socket) {
 		io.emit("limit", msg);
 	});
 
+	socket.on("limitMin", async (msg) => {
+		[err] = await to(limit.setMin(msg));
+		if (err) {
+			console.error(err);
+			return;
+		}
+		io.emit("limitMin", msg);
+	});
+
 	socket.on("plug", async (msg) => {
 		[err] = await to(plug.set(msg));
 		if (err) {
@@ -89,6 +98,7 @@ plug.connect();
 function sendData() {
 	io.emit("data", {
 		limit: limit.get(),
+		limitMin: limit.getMin(),
 		scooter: account.getScooter(),
 		plug: plug.get(),
 	});
@@ -105,9 +115,9 @@ function isAllowedToCharge() {
 	return true;
 }
 
-async function isUnderChargeLimit() {
+async function isUnderMinCharge() {
 	try {
-		let lim = await limit.get();
+		let lim = await limit.getMin();
 
 		return account.getScooter().soc < lim;
 	} catch (err) {
@@ -116,7 +126,18 @@ async function isUnderChargeLimit() {
 	}
 }
 
-setChargingInterval();
+async function isOverMaxCharge() {
+	try {
+		let lim = await limit.get();
+
+		return account.getScooter().soc > lim;
+	} catch (err) {
+		console.error(err);
+		return true;
+	}
+}
+
+setIdleInterval();
 
 // Update every 30 minutes until the charge begins
 function setIdleInterval() {
@@ -137,7 +158,7 @@ function setIdleInterval() {
 		}
 		sendData();
 
-		var canCharge = await isUnderChargeLimit();
+		var canCharge = await isUnderMinCharge();
 
 		if (isAllowedToCharge() && canCharge) {
 			// free power!, switch on
@@ -178,16 +199,16 @@ function setChargingInterval() {
 
 			console.log("Checking SOC", account.getScooter().soc, "%", first);
 
-			var canCharge = await isUnderChargeLimit();
+			var canCharge = await isOverMaxCharge();
 
 			if (isAllowedToCharge() && canCharge) {
 				// free power!, switch on
-				console.log("Starting charge - free power!");
+				console.log("Still charging");
 				plug.set(true);
 			}
 			else {
 				// shouldn't charge! switch off
-				console.log("Stopping charge - not free power");
+				console.log("Stopping charge");
 				plug.set(false);
 
 				setIdleInterval();
