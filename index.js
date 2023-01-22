@@ -94,9 +94,15 @@ function sendData() {
 	});
 }
 
-function isInPowerTime() {
-	var hour = new Date().getHours();
-	return hour >= 21;	// free 9pm to midnight
+function isAllowedToCharge() {
+	if (config.get("useAllowedChargeTime")) {
+		var hour = new Date().getHours();
+		if (hour < config.get("startAllowedChargeTime"))
+			return false;
+		if (hour > config.get("endAllowedChargeTime"))
+			return false;
+	}
+	return true;
 }
 
 async function isUnderChargeLimit() {
@@ -133,7 +139,7 @@ function setIdleInterval() {
 
 		var canCharge = await isUnderChargeLimit();
 
-		if (isInPowerTime() && canCharge) {
+		if (isAllowedToCharge() && canCharge) {
 			// free power!, switch on
 			console.log("Starting charge - free power!");
 			plug.set(true);
@@ -174,7 +180,7 @@ function setChargingInterval() {
 
 			var canCharge = await isUnderChargeLimit();
 
-			if (isInPowerTime() && canCharge) {
+			if (isAllowedToCharge() && canCharge) {
 				// free power!, switch on
 				console.log("Starting charge - free power!");
 				plug.set(true);
